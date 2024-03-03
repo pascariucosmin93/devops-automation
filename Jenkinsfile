@@ -6,13 +6,13 @@ pipeline {
         dockerImage = "java"
         dockerCredentials = 'docker-registry' // ID-ul de acreditare pentru Docker
         kubeconfigId = 'KUBECONFIG' // ID-ul kubeconfig
-        kubeConfigs = 'myweb.yaml' // Fișierul de configurație Kubernetes YAML
+        kubeConfigs = 'deploymentservice.yaml' // Fișierul de configurație Kubernetes YAML
     }
     
     stages {
         stage('Checkout Source') {
             steps {
-                git branch: 'main', url: 'https://github.com/pascariucosmin93/docker-jenkins-integration.git'
+                git branch: 'main', url: 'https://github.com/pascariucosmin93/devops-automation.git'
             }
         }
         
