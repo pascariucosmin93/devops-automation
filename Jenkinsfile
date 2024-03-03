@@ -1,37 +1,43 @@
 pipeline {
     agent any
-    tools{
-        maven 'maven_3_5_0'
+    
+    environment {
+        registry = "registry.cosmin-lab.cloud:5000"
+        dockerImage = "java"
+        dockerCredentials = 'docker-registry' // ID-ul de acreditare pentru Docker
+        kubeconfigId = 'KUBECONFIG' // ID-ul kubeconfig
+        kubeConfigs = 'myweb.yaml' // Fișierul de configurație Kubernetes YAML
     }
-    stages{
-        stage('Build Maven'){
-            steps{
-                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]])
-                sh 'mvn clean install'
+    
+    stages {
+        stage('Checkout Source') {
+            steps {
+                git branch: 'main', url: 'https://github.com/pascariucosmin93/docker-jenkins-integration.git'
             }
         }
-        stage('Build docker image'){
-            steps{
-                script{
-                    sh 'docker build -t javatechie/devops-integration .'
+        
+        stage('Build Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("${registry}/${dockerImage}:1")
                 }
             }
         }
-        stage('Push image to Hub'){
-            steps{
-                script{
-                   withCredentials([string(credentialsId: 'dockerhub-pwd', variable: 'dockerhubpwd')]) {
-                   sh 'docker login -u javatechie -p ${dockerhubpwd}'
-
-}
-                   sh 'docker push javatechie/devops-integration'
+        
+        stage('Push Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://' + registry, dockerCredentials) {
+                        dockerImage.push()
+                    }
                 }
             }
         }
-        stage('Deploy to k8s'){
-            steps{
-                script{
-                    kubernetesDeploy (configs: 'deploymentservice.yaml',kubeconfigId: 'k8sconfigpwd')
+        
+        stage('Deploy App') {
+            steps {
+                script {
+                    kubernetesDeploy(configs: KUBECONFIG, KUBECONFIGId: KUBECONFIGId)
                 }
             }
         }
